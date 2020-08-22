@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-06-11 08:54:58
-LastEditTime: 2020-08-22 11:06:18
+LastEditTime: 2020-08-22 15:30:00
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /Utils/Dataset/utils/small_world.py
@@ -35,8 +35,8 @@ def local_connectivity_pattern_extraction_fold(data_fold: dict, threshold: float
         # for node_row in node_rows:
             plus = node_row + np.transpose(node_row, axes=[0, 2, 1, 3])
             mask = mask_row * np.transpose(mask_row, axes=[0, 2, 1, 3])
-            connectivity_patterns.append(plus)
-            mask_connectivity_patterns.append(plus * mask)
+            connectivity_patterns.append(functional_connectivity * plus / 2)
+            mask_connectivity_patterns.append(functional_connectivity * plus * mask / 2)
         connectivity_patterns = np.concatenate(connectivity_patterns, axis=-1)
         mask_connectivity_patterns = np.concatenate(
             mask_connectivity_patterns, axis=-1)
