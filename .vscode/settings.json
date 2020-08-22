@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "/home/ai/anaconda3/envs/yy-py35/bin/python"
+    "python.pythonPath": "/home/yaoyao/.conda/envs/yy-tf2/bin/python",
+    "python.linting.enabled": false,
+    "python.dataScience.debugJustMyCode": false
 }

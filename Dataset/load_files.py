@@ -8,9 +8,8 @@ import sklearn.covariance as cov
 import nibabel as nib
 
 from functools import partial
-from nipy.io.files import load
 from sklearn.preprocessing import scale
-from Dataset.utils import run_progress, format_config, compute_connectivity, create_dataset_hdf5, \
+from Dataset.utils.basic import run_progress, format_config, compute_connectivity, create_dataset_hdf5, \
     hdf5_handler
 
 

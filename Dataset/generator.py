@@ -3,7 +3,7 @@ import numpy as np
 from scipy import sparse
 
 from Dataset.load_files import load_subjects_data, load_nifti_data
-from Dataset.utils import hdf5_handler, t_test, matrix_to_sparse, create_dataset_hdf5
+from Dataset.utils.basic import hdf5_handler, t_test, matrix_to_sparse, create_dataset_hdf5
 
 
 def MultiInstance_patch(images, landmarks, patch_size, numofscales):

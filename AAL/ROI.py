@@ -1,4 +1,5 @@
 import os
+import collections
 import numpy as np
 
 parcellation_roi = {
@@ -16,7 +17,8 @@ parcellation_roi = {
     'SUB':
         ['CAU', 'PUT', 'PAL', 'THA'],
 }
-parcellation_names = ['FRONTAL', 'PARIETAL', 'LIMBIC', 'TEMPORAL', 'OCCIPITAL', 'SUB']
+parcellation_names = ['FRONTAL', 'PARIETAL',
+                      'LIMBIC', 'TEMPORAL', 'OCCIPITAL', 'SUB']
 roi_parcellation = {}
 for parcel in parcellation_names:
     for roi in parcellation_roi[parcel]:
@@ -162,7 +164,16 @@ def load_rois(file_path: str = None):
     return rois
 
 
+
 def load_roi_info(file_path: str = None):
+    """Load roi info from roi_names.txt under current directory
+
+    Keyword Arguments:
+        file_path {str} -- [description] (default: {None})
+
+    Returns:
+        [dict] -- Ordered Dictionary of {ROI name: roi (instance of class ROI)}
+    """
     if file_path is None:
         file_path = '/'.join(__file__.split('/')[:-1]) + '/roi_names.txt'
     file = open(file_path)
@@ -173,7 +184,7 @@ def load_roi_info(file_path: str = None):
         try:
             index = int(info)
             name = ''
-        except:
+        except ValueError:
             if '-' in info:
                 abrv, hemisphere = info.split('-')
                 parcelation = roi_parcellation[abrv]
@@ -241,3 +252,14 @@ def load_parcellations(rois_dict: dict = None):
         parcellations.append(parce)
 
     return parcellations
+
+def load_sorted_rois(file_path: str = None):
+    roi_dict = load_roi_info(file_path=file_path)
+    index_roi = collections.OrderedDict()
+    for _,value in roi_dict.items():
+        index_roi[value.index_AAL] = value
+
+    return index_roi
+
+if __name__ == '__main__':
+    rois = load_sorted_rois()

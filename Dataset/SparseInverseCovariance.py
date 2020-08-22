@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from Dataset.DataBase import DataBase
-from Dataset.utils import hdf5_handler, create_dataset_hdf5
+from Dataset.utils.basic import hdf5_handler, create_dataset_hdf5
 from sklearn.covariance import graphical_lasso
 
 '''

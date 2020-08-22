@@ -1,3 +1,4 @@
+import sklearn.covariance.empirical_covariance_
 import os
 import sys
 
@@ -69,7 +70,7 @@ def upload_file(ftp, remote_path, local_path):
 def main():
     ftp = ftp_connect('mrirc.psych.ac.cn', 'ftpdownload', 'FTPDownload')
     ftp.cwd('sharing/RfMRIMaps')
-    projects = ['ABIDE', 'ABIDE2', 'FCP']
+    projects = ['ABIDE_Initiative', 'ABIDE2', 'ADHD200']
 
     basic_dir_path = ''
     for project in projects:
@@ -88,6 +89,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-import sklearn.covariance.empirical_covariance_
