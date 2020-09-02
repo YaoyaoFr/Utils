@@ -29,7 +29,7 @@ class SchemeData():
         self.dir_path = dir_path
 
         if not dataset_list:
-            dataset_list = ['ABIDE', 'ABIDE2']
+            dataset_list = ['ABIDE_Initiative', 'ABIDE2']
         self.dataset_list = dataset_list
 
         self.hdf5_path = os.path.join(dir_path,
@@ -131,13 +131,6 @@ class SchemeData():
                             fold_data = data_normalization_fold_SM(
                                 data_fold=fold_data)
 
-                            for name in fold_data:
-                                print('Create dataset {:s}...'.format(name))
-                                create_dataset_hdf5(group=fold_group,
-                                                    data=fold_data[name],
-                                                    name=name)
-                            return
-
                     elif scheme == 'GCNN':
                         fold_data = {}
                         subject_IDs = DataBase(
@@ -163,46 +156,52 @@ class SchemeData():
                         for p in fold_parcellation:
                             fold_data['{:s} indexes'.format(p)] = indexes[p]
 
-                        # adjacency_matrix = np.zeros(shape=[num_node, num_node])
-                        # for attr in ['site', 'sex']:
-                        #     subject_attr = [DataBase(dir_path=self.dir_path).get_attrs(dataset_subIDs=fold_parcellation[p],
-                        #                                                                attrs=[attr])[attr] for p in fold_parcellation]
-                        #     subject_attr = np.concatenate(subject_attr)
-                        #     for i in range(num_node):
-                        #         for j in range(i+1, num_node):
-                        #             if subject_attr[i] == subject_attr[j]:
-                        #                 adjacency_matrix[i, j] += 1
-                        #                 adjacency_matrix[j, i] += 1
-                        # upper_features = upper_triangle(data=raw_features)
-                        # activation_features = np.arctanh(upper_features)
+                        adjacency_matrix = np.zeros(shape=[num_node, num_node])
+                        for attr in ['site', 'sex']:
+                            subject_attr = [DataBase(dir_path=self.dir_path).get_attrs(dataset_subIDs=fold_parcellation[p],
+                                                                                       attrs=[attr])[attr] for p in fold_parcellation]
+                            subject_attr = np.concatenate(subject_attr)
+                            for i in range(num_node):
+                                for j in range(i+1, num_node):
+                                    if subject_attr[i] == subject_attr[j]:
+                                        adjacency_matrix[i, j] += 1
+                                        adjacency_matrix[j, i] += 1
+                        upper_features = upper_triangle(data=raw_features)
+                        activation_features = np.arctanh(upper_features)
 
-                        # selected_features = feature_selection(matrix=activation_features,
-                        #                                       labels=onehot2vector(
-                        #                                           fold_data['labels']),
-                        #                                       train_ind=indexes['train'],
-                        #                                       fnum=2000)
+                        selected_features = feature_selection(matrix=activation_features,
+                                                              labels=onehot2vector(
+                                                                  fold_data['labels']),
+                                                              train_ind=indexes['train'],
+                                                              fnum=2000)
 
-                        # # Calculate all pairwise distances
-                        # distv = distance.pdist(
-                        #     selected_features, metric='correlation')
-                        # # Convert to a square symmetric distance matrix
-                        # dist = distance.squareform(distv)
-                        # sigma = np.mean(dist)
-                        # # Get affinity from similarity matrix
-                        # sparse_graph = np.exp(- dist ** 2 / (2 * sigma ** 2))
-                        # adjacency_matrix = adjacency_matrix * sparse_graph
+                        # Calculate all pairwise distances
+                        distv = distance.pdist(
+                            selected_features, metric='correlation')
+                        # Convert to a square symmetric distance matrix
+                        dist = distance.squareform(distv)
+                        sigma = np.mean(dist)
+                        # Get affinity from similarity matrix
+                        sparse_graph = np.exp(- dist ** 2 / (2 * sigma ** 2))
+                        adjacency_matrix = adjacency_matrix * sparse_graph
 
-                        # fold_data['adjacency matrix'] = adjacency_matrix
+                        fold_data['adjacency matrix'] = adjacency_matrix
 
-                        # preprocessedd_features = preprocess_features(
-                        #     selected_features)
-                        # fold_data['features'] = preprocessedd_features
+                        preprocessedd_features = preprocess_features(
+                            selected_features)
+                        fold_data['features'] = preprocessedd_features
 
                     for name in fold_data:
                         print('Create dataset {:s}...'.format(name))
                         create_dataset_hdf5(group=fold_group,
                                             data=fold_data[name],
                                             name=name)
+
+                    # write_to_tfrecord(dir_path='/home/ai/data/yaoyao/Data',
+                    #                   dataset=dataset,
+                    #                   scheme=scheme,
+                    #                   fold_name=fold_name,
+                    #                   data_fold=fold_data)
 
     def set_scheme_tfrecord(
             self,
@@ -238,15 +237,10 @@ class SchemeData():
             parcellation = DatasetParcellation(
                 dir_path=self.dir_path).load_parcellation(
                     name=parcellation_name[dataset], cross_validation='5 fold')
-            hdf5 = hdf5_handler(self.hdf5_path)
-            dataset_group = hdf5.require_group(dataset)
 
             for scheme in schemes:
-                scheme_name = 'scheme {:s}'.format(scheme)
-                scheme_group = dataset_group.require_group(scheme_name)
 
                 for fold_name in parcellation:
-                    fold_group = scheme_group.require_group(fold_name)
                     fold_parcellation = parcellation[fold_name]
                     fold_data = {}
                     for p in fold_parcellation:
@@ -265,29 +259,38 @@ class SchemeData():
                             if name in fold_data:
                                 adjacency_matrix = np.squeeze(
                                     np.abs(fold_data[name]))
-                                harmonic = 1 - np.divide(
-                                    adjacency_matrix,
-                                    np.expand_dims(np.sum(adjacency_matrix,
-                                                          axis=2),
-                                                   axis=-1))
+                                harmonic = 1 - np.divide(adjacency_matrix,
+                                                         np.expand_dims(np.sum(adjacency_matrix,
+                                                                               axis=2),
+                                                                        axis=-1))
                                 fold_data['{:s} harmonic'.format(
                                     tag)] = harmonic
 
                         if scheme == 'CNNSmallWorld':
                             # Calculate Node-level connectivity pattern matrices
                             print(
-                                'Extracting local connectivity patterns of {:s}'.format(fold_name))
+                                'Extracting local connectivity patterns of {:s}...'.format(fold_name))
                             fold_data = local_connectivity_pattern_extraction_fold(
-                                data_fold=fold_data, threshold=0.5)
+                                data_fold=fold_data, sparsity=1)
+
+                            # # Normalization
                             print(
-                                'Data normalization local connectivity patterns of {:s}'.format(fold_name))
-                            for tag in ['CPs', 'maskCPs']:
-                                fold_data = data_normalization_fold_SM(
+                                'Data normalization local connectivity patterns of {:s}...'.format(fold_name))
+                            fold_data = data_normalization_fold(
+                                data_fold=fold_data)
+                            for tag in ['CPs']:
+                                fold_data = data_normalization_fold_SM( 
                                     data_fold=fold_data,
                                     tag=tag)
                             print(
-                                'Data normalization local connectivity patterns of {:s} complete'.format(fold_name))
+                                '\nData normalization local connectivity patterns of {:s} complete'.format(fold_name))
+                        elif scheme == 'CNNEWHarmonic':
+                            fold_data = data_normalization_fold(
+                                data_fold=fold_data)
 
+                    elif scheme in ['CNNElementWise']:
+                        fold_data = data_normalization_fold(
+                            data_fold=fold_data)
 
                     write_to_tfrecord(dir_path='/home/ai/data/yaoyao/Data',
                                       dataset=dataset,
@@ -379,6 +382,7 @@ class SchemeData():
                        scheme: str,
                        parcellation_name: str = None,
                        features: list = None,
+                       source_features: list = None,
                        normalization: bool = False):
         """
         Set the scheme dataset according to parcellation from DatasetParcellation.
@@ -405,7 +409,9 @@ class SchemeData():
         }
 
         if not features:
-            features = ['pearson correlation', 'label']
+            features = ['pearson correlation Cyberduck', 'label']
+        if not source_features:
+            source_features = ['pearson correlation RfMRIMaps', 'label']
 
         feature_str, label_str = features
 
@@ -438,19 +444,23 @@ class SchemeData():
                 trian_data = fold_data['train data']
                 train_label = fold_data['train label']
 
+                # Source data
+
+                source_feature_str, source_label_str = source_features
                 source_data = DataBase(
                     dataset_list=SOURCE_NAME[dataset]).get_data(
-                        features=features)
-                source_pc = np.expand_dims(source_data[feature_str], axis=-1)
-                source_label = source_data[label_str]
-                normal_index = np.argmax(source_label, axis=1) == 1
+                        features=source_features)
+                source_pc = np.expand_dims(
+                    source_data[source_feature_str], axis=-1)
+                source_label = source_data[source_label_str]
+                normal_index = np.argmax(source_label, axis=1) == 0
 
                 fold_data['source data'] = source_pc[normal_index]
                 fold_data['source label'] = source_label[normal_index]
 
                 if normalization:
                     fold_data = data_normalization_fold(
-                        fold_data, strategy='normalization')
+                        strategy='normalization')
 
                 # normal_index_train = np.argmax(train_label, axis=1) == 1
                 fold_data['pretrain data'] = np.concatenate(
@@ -795,3 +805,5 @@ if __name__ == '__main__':
 
     sd = SchemeData(dataset_list=dataset_list)
     sd.set_scheme_tfrecord(schemes=schemes)
+    # sd.set_scheme(schemes=schemes)
+    # sd.set_DTL_scheme(scheme='DTLNN')

@@ -268,6 +268,8 @@ def data_normalization_fold(
             fit_data.append(data_fold[index])
 
         fit_data = np.concatenate(fit_data, axis=0)
+        data_max = np.max(fit_data, axis=0, keepdims=True)
+        data_min = np.min(fit_data, axis=0, keepdims=True)
         shape = np.shape(fit_data)
         feature_dim = np.prod(shape[1:])
         fit_data = np.reshape(fit_data, newshape=[-1, feature_dim])
@@ -290,8 +292,6 @@ def data_normalization_fold(
         if strategy == 'standarization':
             data = preprocessor.transform(data)
         elif strategy == 'normalization':
-            data_max = np.max(data, axis=0, keepdims=True)
-            data_min = np.min(data, axis=0, keepdims=True)
             data = (data - data_min) / (data_max - data_min)
             data = np.nan_to_num(data)
 

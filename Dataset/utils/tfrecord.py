@@ -5,7 +5,7 @@ import tensorflow as tf
 '''
 Author: your name
 Date: 2020-08-18 11:28:16
-LastEditTime: 2020-08-22 11:17:41
+LastEditTime: 2020-08-23 17:22:01
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /python/home/ai/data/yaoyao/Program/Python/Utils/Dataset/utils/tfrecord.py
@@ -29,13 +29,18 @@ SCHEME_FEATURES = {
         'data': {'shape': (90, 90, 1), 'type': 'float'},
         'label': {'type': 'float'},
         'CPs': {'shape': (90, 90, 90), 'type': 'float'},
+        # 'maskCPs': {'shape': (90, 90, 90), 'type': 'float'},
         'harmonic': {'shape': (90, 90), 'type': 'float'},
-        'maskCPs': {'shape': (90, 90, 90), 'type': 'float'}
     },
 
     'CNNElementWise': {
         'data': {'shape': (90, 90, 1), 'type': 'float'},
         'label': {'type': 'float'},
+    },
+    'CNNEWHarmonic': {        
+        'data': {'shape': (90, 90, 1), 'type': 'float'},
+        'label': {'type': 'float'},
+        'harmonic': {'shape': (90, 90), 'type': 'float'},
     }
 }
 
@@ -50,6 +55,15 @@ FEATURE_DESCRIPTION = {
         'data/shape': tf.io.FixedLenFeature([3], tf.int64),
         'CPs': tf.io.FixedLenFeature([np.prod([90, 90, 90])], tf.float32),
         'CPs/shape': tf.io.FixedLenFeature([3], tf.int64),
+        # 'maskCPs': tf.io.FixedLenFeature([np.prod([90, 90, 90])], tf.float32),
+        # 'maskCPs/shape': tf.io.FixedLenFeature([3], tf.int64),
+        'harmonic': tf.io.FixedLenFeature([np.prod([90, 90])], tf.float32),
+        'harmonic/shape': tf.io.FixedLenFeature([2], tf.int64),
+        'label': tf.io.FixedLenFeature([2], tf.float32),
+    },
+    'CNNEWHarmonic': {
+        'data': tf.io.FixedLenFeature([np.prod([90, 90, 1])], tf.float32),
+        'data/shape': tf.io.FixedLenFeature([3], tf.int64),
         'harmonic': tf.io.FixedLenFeature([np.prod([90, 90])], tf.float32),
         'harmonic/shape': tf.io.FixedLenFeature([2], tf.int64),
         'label': tf.io.FixedLenFeature([2], tf.float32),
@@ -58,7 +72,7 @@ FEATURE_DESCRIPTION = {
 
 FEATURES = {
     'CNNElementWise': ['data', 'label'],
-    'CNNSmallWorld': ['data', 'CPs', 'harmonic', 'label']
+    'CNNSmallWorld': ['data', 'CPs', 'maskCPs', 'harmonic', 'label']
 }
 
 
@@ -77,11 +91,14 @@ def write_to_tfrecord(dir_path: str, dataset: str, scheme: str, fold_name: str, 
             for sample_index in range(length):
                 print(
                     '\rProcessing {:}/{:}'.format(sample_index+1, length), end='')
-                
+
                 feature_tfrecord = {}
                 for type in features.keys():
-                    value = data_fold['{:s} {:s}'.format(
-                        tag, type)][sample_index]
+                    name = '{:s} {:s}'.format(
+                        tag, type)
+                    if name not in data_fold:
+                        continue
+                    value = data_fold[name][sample_index]
                     if 'shape' in features[type]:
                         shape = features[type]['shape']
                         feature_tfrecord['{:s}/shape'.format(type)] = TRAIN_FEATURE['int'](
@@ -136,7 +153,6 @@ class TFRecordDataset(tf.data.TFRecordDataset):
         else:
             feature_description_ = feature_description
 
-
         tf.data.TFRecordDataset.__init__(self, self.file_path)
 
         self.sample_nums = len([d for d in self])
@@ -151,12 +167,12 @@ def load_data_tfrecord(dataset: str,
                        dir_path: str = None,
                        batch_size: int = 8):
     dataset = TFRecordDataset(
-        scheme=scheme, fold_name=fold_name, tag=tag, features=features)
+        scheme=scheme, fold_name=fold_name, tag=tag, features=features, batch_size=batch_size)
 
     dataset_repeat = dataset.repeat()
     dataset_map = dataset_repeat.map(read_and_decode)
-    dataset_shuffle = dataset_map.shuffle(buffer_size=100)
-    dataset_batch = dataset_shuffle.batch(batch_size=batch_size)
+    # dataset_shuffle = dataset_map.shuffle(buffer_size=100)
+    dataset_batch = dataset_map.batch(batch_size=batch_size)
     dataset_batch.steps_per_epoch = dataset.steps_per_epoch
 
     return dataset_batch
@@ -175,4 +191,3 @@ def read_and_decode(example_string):
         datas.append(data)
 
     return (tuple([datas[index] for index in range(len(features_)-1)]), datas[-1])
-    # return tuple(datas)

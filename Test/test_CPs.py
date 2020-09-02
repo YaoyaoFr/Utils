@@ -1,31 +1,31 @@
 '''
 Author: your name
 Date: 2020-08-20 11:01:01
-LastEditTime: 2020-08-20 11:48:31
+LastEditTime: 2020-08-23 10:37:31
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /DeepLearning2.0/home/ai/data/yaoyao/Program/Python/Utils/Test/test_CPs.py
 '''
+import time
 import numpy as np
+from Dataset.utils.small_world import local_connectivity_pattern_extraction_fold, local_connectivity_pattern_extraction_fold2
 
-a = np.random.random([10, 5, 5, 1])
-abs_a = np.abs(a)
-mask_a = np.cast[int](abs_a >= 0.5)
+sample_sizes = [654, 200, 220]
+fold_data = {'{:s} data'.format(tag): np.random.random(
+    [sample_size, 90, 90, 1]) for sample_size, tag in zip(sample_sizes, ['train', 'valid', 'test'])}
 
-sample_size, node_num, node_num, channel_num = np.shape(a)
+# time1 = time.clock()
 
-mask_rows = np.split(mask_a, indices_or_sections=node_num, axis=1)
-node_rows = np.split(abs_a, indices_or_sections=node_num, axis=1)
-# for node_row in node_rows:
+# fold_data = local_connectivity_pattern_extraction_fold(
+#     fold_data, threshold=0.5)
+
+# print('Old version: {:}'.format(time2 - time1))
+
+time2 = time.clock()
+fold_data = local_connectivity_pattern_extraction_fold2(
+    fold_data, threshold=0.5)
+
+time3 = time.clock()
 
 
-connectivity_patterns = []
-for node_row, mask_row in zip(node_rows, mask_rows):
-    plus = node_row + np.transpose(node_row, axes=[0, 2, 1, 3])
-    mask = mask_row * np.transpose(mask_row, axes=[0, 2, 1, 3])
-    connectivity_patterns.append(plus * mask)
-connectivity_patterns = np.concatenate(connectivity_patterns, axis=-1)
-
-connectivity_patterns = np.concatenate(
-    [node_row + np.transpose(node_row, axes=[0, 2, 1, 3]) * mask_row * np.transpose(mask_row, axes=[0, 2, 1, 3]) for node_row, mask_row in zip(node_rows, mask_rows)], axis=-1)
-pass
+print('New version: {:}'.format(time3 - time2))
