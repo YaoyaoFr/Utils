@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2019-12-23 09:22:44
-LastEditTime: 2020-09-02 11:34:56
+LastEditTime: 2020-09-02 17:17:54
 LastEditors: Yaoyao
 Description: In User Settings Edit
 FilePath: /DeepLearning2.0/home/ai/data/yaoyao/Program/Python/Utils/ops/matrix.py
@@ -168,7 +168,8 @@ def matrix_significance_difference(
 
 
 def get_edges(matrix: np.ndarray,
-              top: int = None, 
+              top: int = None,
+              if_symmetric: bool = None,
               output_path: str = None):
     shape = np.shape(matrix)
     assert len(shape) == 2, 'The rank of input matrix must be to but get {:d}.'.format(
@@ -178,10 +179,14 @@ def get_edges(matrix: np.ndarray,
 
     if top is not None:
         matrix_top = np.zeros(shape=shape)
-        for element in matrix_sort(matrix=matrix, top=top):
-            matrix_top[element['coordinate']] = element['value']
+
+        sorted_matrix = matrix_sort(
+            matrix=matrix, top=top, if_symmetric=if_symmetric)
+        for index, element in sorted_matrix.items():
+            [m, n] = element['coordinate']
+            matrix_top[m, n] = element['value']
     else:
         matrix_top = np.copy(matrix)
 
     np.savetxt(output_path, matrix_top)
-    print('Save matrix to {:s}.'.format())
+    # print('Save matrix to {:s}.'.format(output_path))

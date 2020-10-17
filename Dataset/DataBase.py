@@ -690,9 +690,9 @@ if __name__ == "__main__":
     #     ],
     #     atlas_list=['aal90'],
     # )
-    db.statistical_analysis(threshold=0.05, if_FCs=False, if_LCPs=True)
+    # db.statistical_analysis(threshold=0.05, if_FCs=False, if_LCPs=True)
 
-    # db.clustering_coefficient_analysis()
+    db.clustering_coefficient_analysis()
 
     # Debug part
     # hdf5 = hdf5_handler(db.hdf5_path)

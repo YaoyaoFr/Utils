@@ -292,7 +292,7 @@ class SchemeData():
                         fold_data = data_normalization_fold(
                             data_fold=fold_data)
 
-                    write_to_tfrecord(dir_path='/home/ai/data/yaoyao/Data',
+                    write_to_tfrecord(dir_path='/home/ai/data/yaoyao/Data2',
                                       dataset=dataset,
                                       scheme=scheme,
                                       fold_name=fold_name,
